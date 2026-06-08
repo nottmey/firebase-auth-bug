@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "name": "auth emulator",
+      "presentation": {
+        "group": "firebase_auth_bug",
+        "order": 0
+      },
+      "request": "launch",
+      "runtimeArgs": ["emulators:start", "--only", "auth"],
+      "runtimeExecutable": "firebase",
+      "type": "node"
+    },
+    {
+      "cwd": "${workspaceFolder}",
+      "deviceId": "chrome",
+      "name": "web",
+      "presentation": {
+        "group": "firebase_auth_bug",
+        "order": 1
+      },
+      "program": "lib/main.dart",
+      "request": "launch",
+      "toolArgs": [
+        "--web-port=7357",
+        "--dart-define=AUTH_EMULATOR_PORT=9099"
+      ],
+      "type": "dart"
+    }
+  ],
+  "compounds": [
+    {
+      "configurations": ["auth emulator", "web"],
+      "name": "auth emulator + web",
+      "presentation": {
+        "group": "firebase_auth_bug",
+        "order": 2
+      },
+      "stopAll": true
+    }
+  ]
+}

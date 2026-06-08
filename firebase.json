@@ -1,0 +1,25 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "configurations": {
+            "web": "1:809486347085:web:1ff3e9986ce75aec40e504"
+          },
+          "projectId": "firebase-auth-bug"
+        }
+      }
+    }
+  }
+}

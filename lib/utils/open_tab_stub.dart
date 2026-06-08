@@ -1,0 +1,1 @@
+void openDuplicateTab(String url) {}
