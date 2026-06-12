@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth_bug/auth_user_stream.dart';
-import 'package:firebase_auth_bug/utils/open_tab.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:web/web.dart' as web;
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -17,8 +16,8 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   final List<String> _eventLog = [];
   StreamSubscription<User?>? _authSubscription;
-  User? _streamUser;
-  String? _liveCurrentUserUid;
+  User? _latestUser;
+  String? _currentUserUid;
 
   @override
   void initState() {
@@ -34,23 +33,23 @@ class _AppState extends State<App> {
 
   void _listenToAuth() {
     unawaited(_authSubscription?.cancel());
-    _authSubscription = authUserStream(FirebaseAuth.instance).listen((user) {
+
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
       final currentUser = FirebaseAuth.instance.currentUser;
       final streamLabel = user == null ? 'null' : 'uid=${user.uid}';
-      final currentLabel =
-          currentUser == null ? 'null' : 'uid=${currentUser.uid}';
-      final mismatch = user?.uid != currentUser?.uid;
-      final message =
-          '${DateTime.now().toIso8601String()} stream→$streamLabel | '
-          'currentUser→$currentLabel'
-          '${mismatch ? ' ⚠ MISMATCH' : ''}';
+      final currentLabel = currentUser == null
+          ? 'null'
+          : 'uid=${currentUser.uid}';
       setState(() {
-        _streamUser = user;
-        _liveCurrentUserUid = currentUser?.uid;
-        _eventLog.insert(0, message);
-        if (_eventLog.length > 40) {
-          _eventLog.removeRange(40, _eventLog.length);
-        }
+        _latestUser = user;
+        _currentUserUid = currentUser?.uid;
+        _eventLog.insert(
+          0,
+          '${DateTime.now().toIso8601String()} '
+          'stream→$streamLabel | '
+          'currentUser→$currentLabel'
+          '${user?.uid != currentUser?.uid ? ' ⚠ MISMATCH' : ''}',
+        );
       });
     });
   }
@@ -84,14 +83,13 @@ class _AppState extends State<App> {
     if (!kIsWeb) {
       return;
     }
-    openDuplicateTab(_pageUrl);
+    web.window.open(_pageUrl, '_blank');
   }
 
   @override
   Widget build(BuildContext context) {
-    final streamSignedIn = _streamUser != null;
-    final statusLine = streamSignedIn
-        ? 'UI: signed in (stream uid=${_streamUser!.uid})'
+    final statusLine = _latestUser != null
+        ? 'UI: signed in (stream uid=${_latestUser!.uid})'
         : 'UI: signed out (stream is null)';
 
     return MaterialApp(
@@ -114,7 +112,7 @@ class _AppState extends State<App> {
               Text(statusLine, style: Theme.of(context).textTheme.titleMedium),
               Text(
                 'FirebaseAuth.instance.currentUser: '
-                '${_liveCurrentUserUid ?? 'null'}',
+                '${_currentUserUid ?? 'null'}',
               ),
               const SizedBox(height: 12),
               const Text('Repro steps'),
@@ -136,8 +134,14 @@ class _AppState extends State<App> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  FilledButton(onPressed: _signIn, child: const Text('Sign in')),
-                  OutlinedButton(onPressed: _signOut, child: const Text('Sign out')),
+                  FilledButton(
+                    onPressed: _signIn,
+                    child: const Text('Sign in'),
+                  ),
+                  OutlinedButton(
+                    onPressed: _signOut,
+                    child: const Text('Sign out'),
+                  ),
                   if (kIsWeb)
                     FilledButton.tonal(
                       onPressed: _openDuplicateTab,
